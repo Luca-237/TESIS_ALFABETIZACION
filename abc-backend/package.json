@@ -1,0 +1,27 @@
+{
+  "name": "abc-backend",
+  "version": "1.0.0",
+  "description": "Backend para FitoABC",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/utils/seeder.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@clerk/express": "^2.1.15",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "body-parser": "^2.2.2",
+    "gtts": "^0.2.1",
+    "multer": "^2.1.1",
+    "svix": "^1.93.0",
+    "vosk": "^0.3.39"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

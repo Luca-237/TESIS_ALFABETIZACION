@@ -1,0 +1,97 @@
+-- Extensión para generar UUIDs
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- 1. Tabla de Usuarios
+-- Maneja los datos básicos y la configuración de la interfaz.
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    clerk_id VARCHAR(255) UNIQUE NOT NULL, -- Vinculación con Clerk Auth
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    profile_image_url TEXT,
+    total_points INT DEFAULT 0,
+    theme_preference VARCHAR(50) DEFAULT 'light', -- Para el modo oscuro/claro
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Tabla de Niveles
+-- Define la currícula, desde sílabas hasta cuentos.
+CREATE TABLE levels (
+    id SERIAL PRIMARY KEY,
+    level_order INT UNIQUE NOT NULL, -- 1: Sílabas, 2: Palabras, etc.
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    is_diagnostic BOOLEAN DEFAULT FALSE -- Para identificar si es el nivel de test inicial
+);
+
+-- 3. Tabla de Progreso del Usuario
+-- Relaciona al usuario con los niveles que ha desbloqueado o completado.
+CREATE TABLE user_progress (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    level_id INT REFERENCES levels(id) ON DELETE CASCADE,
+    status VARCHAR(50) DEFAULT 'in_progress', -- 'locked', 'in_progress', 'completed'
+    score INT DEFAULT 0,
+    completed_at TIMESTAMP,
+    UNIQUE(user_id, level_id)
+);
+
+-- 4. Tabla de Sesiones (Estadísticas)
+-- Fundamental para las "Estadísticas al final de la sesión" y paginación.
+CREATE TABLE sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    session_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    duration_seconds INT,
+    correct_words INT DEFAULT 0,
+    incorrect_words INT DEFAULT 0,
+    is_diagnostic_test BOOLEAN DEFAULT FALSE -- Indica si esta sesión fue el test de diagnóstico
+);
+
+-- 5. Tabla de Juegos / Actividades
+-- Catálogo de los minijuegos (Ruleta, Abrecajas, Une parejas, etc.)
+CREATE TABLE activities (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    activity_type VARCHAR(100) NOT NULL -- Ej: 'roulette', 'matching', 'reading'
+);
+
+-- 6. Tabla de Registro de Actividades (Avance granular)
+-- Guarda qué hizo el niño exactamente en cada sesión.
+CREATE TABLE session_activities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
+    activity_id INT REFERENCES activities(id),
+    level_id INT REFERENCES levels(id),
+    words_attempted INT DEFAULT 0,
+    words_hit INT DEFAULT 0, -- Para disparar las imágenes que saltan al acertar
+    points_earned INT DEFAULT 0
+);
+
+-- 7. Tabla de Insignias (Gamificación)
+CREATE TABLE badges (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    image_url TEXT NOT NULL,
+    condition_type VARCHAR(100) -- Ej: 'complete_level_1', '100_words_correct'
+);
+
+-- 8. Tabla de Insignias del Usuario
+CREATE TABLE user_badges (
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    badge_id INT REFERENCES badges(id) ON DELETE CASCADE,
+    earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, badge_id)
+);
+
+-- 9. Tabla de Diccionario / Contenido (Opcional pero recomendada)
+-- Para almacenar las palabras, sílabas y las URLs de las imágenes que saltan.
+CREATE TABLE content_dictionary (
+    id SERIAL PRIMARY KEY,
+    level_id INT REFERENCES levels(id),
+    word VARCHAR(100) NOT NULL,
+    syllables VARCHAR(100), -- Ej: "ma-ri-po-sa"
+    image_url TEXT, -- La imagen que salta al acertar
+    audio_url TEXT  -- Por si pre-grabas audios específicos de variaciones
+);
