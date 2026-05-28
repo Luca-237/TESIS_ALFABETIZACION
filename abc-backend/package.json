@@ -16,7 +16,7 @@
     "@clerk/express": "^2.1.15",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "body-parser": "^2.2.2",
-    "gtts": "^0.2.1",
+    "google-tts-api": "^2.0.2",
     "multer": "^2.1.1",
     "svix": "^1.93.0",
     "vosk": "^0.3.39"
