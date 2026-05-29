@@ -1,0 +1,121 @@
+.home-screen {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  /* Fondo amigable: un gradiente celeste que simula el cielo */
+  background: radial-gradient(circle at center, #a1c4fd 0%, #c2e9fb 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* --- CONTROLES SUPERIOR DERECHA --- */
+.top-right-controls {
+  position: absolute;
+  top: 25px;
+  right: 35px;
+  transform: scale(1.8); /* Hacemos el botón de Clerk más grande para deditos pequeños */
+}
+
+/* --- BOTÓN LATERAL DE INSIGNIAS --- */
+.badges-floating-btn {
+  position: absolute;
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ffb142;
+  border: 6px solid #cc8e35;
+  border-radius: 50%;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  /* Sombra gruesa 3D */
+  box-shadow: 0 12px 0 #cc8e35, 0 20px 25px rgba(0,0,0,0.2);
+  transition: all 0.1s;
+  animation: float 3s ease-in-out infinite;
+}
+
+.badges-floating-btn:active {
+  /* Al presionar, el botón se "hunde" */
+  transform: translateY(-50%) translateY(12px);
+  box-shadow: 0 0 0 #cc8e35, 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.badge-icon {
+  color: white;
+}
+
+/* --- SECCIÓN CENTRAL --- */
+.center-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.mascot-greeting {
+  text-align: center;
+  animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fito-placeholder {
+  font-size: 130px;
+  margin-bottom: -30px;
+}
+
+.greeting-text {
+  font-size: 4rem;
+  font-weight: 900;
+  color: #fff;
+  /* Borde de texto colorido para lectura fácil */
+  text-shadow: 4px 4px 0 #ff5252, 8px 8px 0 rgba(0,0,0,0.1);
+  margin: 0;
+  letter-spacing: 3px;
+}
+
+/* --- BOTÓN GIGANTE DE PLAY --- */
+.giant-play-btn {
+  background-color: #33d9b2;
+  border: 8px solid #218c74;
+  border-radius: 50%;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 18px 0 #218c74, 0 30px 35px rgba(0,0,0,0.3);
+  transition: all 0.1s;
+  animation: pulsePlay 2s infinite;
+}
+
+.play-icon {
+  margin-left: 15px; /* Compensa visualmente el centro del triángulo */
+}
+
+.giant-play-btn:active {
+  transform: translateY(18px);
+  box-shadow: 0 0 0 #218c74, 0 10px 15px rgba(0,0,0,0.3);
+}
+
+/* --- ANIMACIONES --- */
+@keyframes float {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -15px; }
+}
+
+@keyframes pulsePlay {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0); }
+  80% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}

@@ -1,0 +1,125 @@
+.levels-screen {
+  width: 100vw;
+  min-height: 100vh;
+  background: #70a1ff; /* Azul amigable de fondo */
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow-y: auto;
+}
+
+.back-btn {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background: #ff4757;
+  border: 6px solid #c0392b;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.2);
+  transition: transform 0.1s;
+}
+
+.back-btn:active {
+  transform: translateY(8px);
+  box-shadow: 0 0 0 #c0392b, 0 5px 10px rgba(0,0,0,0.2);
+}
+
+.levels-title {
+  font-size: 3.5rem;
+  color: white;
+  text-shadow: 4px 4px 0 #3742fa;
+  margin-bottom: 50px;
+  letter-spacing: 2px;
+}
+
+.levels-path {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.level-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  width: 100%;
+  padding: 20px;
+  border-radius: 25px;
+  box-shadow: 0 10px 0 #dfe4ea;
+  transition: transform 0.2s;
+  z-index: 2; /* Para quedar por encima de las líneas conectoras */
+}
+
+.level-node.unlocked {
+  cursor: pointer;
+  border: 5px solid #2ed573;
+}
+
+.level-node.unlocked:hover {
+  transform: scale(1.05);
+}
+
+.level-node.unlocked:active {
+  transform: translateY(10px) scale(1.05);
+  box-shadow: 0 0 0 #dfe4ea;
+}
+
+.level-node.locked {
+  background: #f1f2f6;
+  border: 5px solid #a4b0be;
+  opacity: 0.8;
+}
+
+.level-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20px;
+  box-shadow: inset 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.level-info h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: #2f3542;
+}
+
+.level-info p {
+  margin: 5px 0 10px 0;
+  font-size: 1.2rem;
+  color: #57606f;
+  font-weight: bold;
+}
+
+.stars-container {
+  display: flex;
+  gap: 5px;
+}
+
+.path-line {
+  position: absolute;
+  bottom: -40px;
+  left: 65px; /* Alineado con el centro del level-circle */
+  width: 15px;
+  height: 45px;
+  background: #ffffff;
+  z-index: 1;
+  border-radius: 10px;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.2);
+}
