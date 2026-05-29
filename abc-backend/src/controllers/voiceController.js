@@ -67,6 +67,7 @@ export const processSpeech = (req, res) => {
 };
 
 // ENDPOINT 2: Text-to-Speech (Hablarle al niño en memoria RAM)
+// ENDPOINT 2: Text-to-Speech (Hablarle al niño en memoria RAM)
 export const generateSpeech = async (req, res) => {
     const { text } = req.body;
 
@@ -75,22 +76,38 @@ export const generateSpeech = async (req, res) => {
     }
 
     try {
-        // 1. Obtenemos la URL de la voz generada por Google
-        const url = googleTTS.getAudioUrl(text, {
+        // 1. Obtenemos todas las URLs (maneja chunks si el texto supera ~200 chars)
+        const urls = googleTTS.getAllAudioUrls(text, {
             lang: 'es',
             slow: false,
             host: 'https://translate.google.com',
         });
 
-        // 2. Descargamos el audio en memoria RAM usando fetch nativo de Node 20
-        const audioResponse = await fetch(url);
-        const arrayBuffer = await audioResponse.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+        // 2. Descargamos cada chunk con User-Agent de navegador real
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://translate.google.com/',
+        };
 
-        // 3. Enviamos los bytes directamente al frontend (Sin usar el disco duro)
+        const audioChunks = await Promise.all(
+            urls.map(async ({ url }) => {
+                const audioResponse = await fetch(url, { headers });
+
+                if (!audioResponse.ok) {
+                    throw new Error(`Google TTS respondió con status ${audioResponse.status}`);
+                }
+
+                const arrayBuffer = await audioResponse.arrayBuffer();
+                return Buffer.from(arrayBuffer);
+            })
+        );
+
+        // 3. Concatenamos todos los chunks y enviamos al frontend
+        const buffer = Buffer.concat(audioChunks);
+
         res.set({
             'Content-Type': 'audio/mpeg',
-            'Content-Length': buffer.length
+            'Content-Length': buffer.length,
         });
         res.send(buffer);
 
