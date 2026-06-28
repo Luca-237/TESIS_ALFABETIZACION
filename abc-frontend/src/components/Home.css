@@ -1,52 +1,57 @@
 .home-screen {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  /* Fondo amigable: un gradiente celeste que simula el cielo */
-  background: radial-gradient(circle at center, #a1c4fd 0%, #c2e9fb 100%);
+  width: 100%;
+  height: 100dvh;
+  /* Fondo blanco nieve limpio */
+  background-color: var(--bg-main);
+  /* Un patrón de puntos sutil para darle textura amigable (opcional, pero queda bien) */
+  background-image: radial-gradient(var(--border-light) 2px, transparent 2px);
+  background-size: 30px 30px;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
 }
 
 /* --- CONTROLES SUPERIOR DERECHA --- */
 .top-right-controls {
   position: absolute;
-  top: 25px;
-  right: 35px;
-  transform: scale(1.8); /* Hacemos el botón de Clerk más grande para deditos pequeños */
+  top: 24px;
+  right: 24px;
+  transform: scale(1.5);
+  transform-origin: top right;
+  z-index: 10;
 }
 
 /* --- BOTÓN LATERAL DE INSIGNIAS --- */
 .badges-floating-btn {
   position: absolute;
-  left: 30px;
-  top: 50%;
-  transform: translateY(-50%);
-  background-color: #ffb142;
-  border: 6px solid #cc8e35;
-  border-radius: 50%;
-  width: 110px;
-  height: 110px;
+  left: 32px;
+  top: 32px;
+  background-color: var(--warning);
+  color: var(--surface);
+  border: 2px solid var(--warning-dark);
+  border-radius: 20px; /* Ya no es un círculo perfecto, es un cuadrado redondeado (squircle) */
+  width: 80px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  /* Sombra gruesa 3D */
-  box-shadow: 0 12px 0 #cc8e35, 0 20px 25px rgba(0,0,0,0.2);
+  /* Sombra 3D característica */
+  box-shadow: 0 6px 0 var(--warning-dark);
   transition: all 0.1s;
-  animation: float 3s ease-in-out infinite;
+  z-index: 10;
 }
 
 .badges-floating-btn:active {
-  /* Al presionar, el botón se "hunde" */
-  transform: translateY(-50%) translateY(12px);
-  box-shadow: 0 0 0 #cc8e35, 0 5px 10px rgba(0,0,0,0.2);
+  transform: translateY(6px);
+  box-shadow: 0 0 0 var(--warning-dark);
 }
 
 .badge-icon {
-  color: white;
+  /* Icono un poco más grande */
+  width: 48px;
+  height: 48px;
 }
 
 /* --- SECCIÓN CENTRAL --- */
@@ -54,68 +59,91 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 40px; /* Más aire entre el título y el botón */
+  margin-top: -5vh; /* Lo subimos un poquito para balancear visualmente */
 }
 
 .mascot-greeting {
   text-align: center;
-  animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
 .fito-placeholder {
-  font-size: 130px;
-  margin-bottom: -30px;
+  font-size: 140px;
+  line-height: 1;
+  /* Le damos un fondo blanco circular como si fuera su avatar */
+  background: var(--surface);
+  border: 4px solid var(--border-light);
+  border-radius: 50%;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.05);
 }
 
 .greeting-text {
-  font-size: 4rem;
+  font-size: 3.5rem;
   font-weight: 900;
-  color: #fff;
-  /* Borde de texto colorido para lectura fácil */
-  text-shadow: 4px 4px 0 #ff5252, 8px 8px 0 rgba(0,0,0,0.1);
+  color: var(--primary);
+  /* Sombra de texto suave en lugar de contornos duros */
+  text-shadow: 0 4px 0 var(--primary-dark);
   margin: 0;
-  letter-spacing: 3px;
+  letter-spacing: 1px;
 }
 
 /* --- BOTÓN GIGANTE DE PLAY --- */
 .giant-play-btn {
-  background-color: #33d9b2;
-  border: 8px solid #218c74;
-  border-radius: 50%;
-  width: 220px;
-  height: 220px;
+  background-color: var(--success);
+  color: var(--surface);
+  border: 2px solid var(--success-dark);
+  border-radius: 32px;
+  width: 280px;
+  height: 100px; /* Ahora es un botón ancho en lugar de un círculo */
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 16px;
   cursor: pointer;
-  box-shadow: 0 18px 0 #218c74, 0 30px 35px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 0 var(--success-dark);
   transition: all 0.1s;
-  animation: pulsePlay 2s infinite;
+  /* Pulsación suave */
+  animation: pulsePlay 3s infinite;
+}
+
+.giant-play-btn::after {
+  content: 'JUGAR';
+  font-family: var(--sans);
+  font-weight: 900;
+  font-size: 2.5rem;
+  letter-spacing: 2px;
 }
 
 .play-icon {
-  margin-left: 15px; /* Compensa visualmente el centro del triángulo */
+  width: 48px;
+  height: 48px;
 }
 
 .giant-play-btn:active {
-  transform: translateY(18px);
-  box-shadow: 0 0 0 #218c74, 0 10px 15px rgba(0,0,0,0.3);
+  transform: translateY(8px);
+  box-shadow: 0 0 0 var(--success-dark);
+  animation: none; /* Pausar animación al presionar */
 }
 
 /* --- ANIMACIONES --- */
-@keyframes float {
-  0%, 100% { margin-top: 0; }
-  50% { margin-top: -15px; }
-}
-
 @keyframes pulsePlay {
   0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.03); }
   100% { transform: scale(1); }
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0); }
-  80% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% { transform: scale(0.5); opacity: 0; }
+  80% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
 }

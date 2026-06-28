@@ -1,130 +1,184 @@
 .levels-screen {
-  width: 100vw;
-  min-height: 100vh;
-  background: #70a1ff; /* Azul amigable de fondo */
-  padding: 40px 20px;
+  width: 100%;
+  min-height: 100dvh;
+  background-color: var(--bg-main);
+  padding: 40px 20px 80px; /* Extra padding en el fondo */
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
+/* --- BOTÓN VOLVER --- */
 .back-btn {
   position: absolute;
-  top: 30px;
-  left: 30px;
-  background: #ff4757;
-  border: 6px solid #c0392b;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
+  top: 24px;
+  left: 24px;
+  background-color: var(--surface);
+  border: 2px solid var(--border-light);
+  border-radius: 16px;
+  width: 64px;
+  height: 64px;
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  box-shadow: 0 8px 0 #c0392b, 0 15px 20px rgba(0,0,0,0.2);
-  transition: transform 0.1s;
+  box-shadow: 0 4px 0 var(--border-light);
+  transition: all 0.1s;
+  z-index: 10;
 }
 
 .back-btn:active {
-  transform: translateY(8px);
-  box-shadow: 0 0 0 #c0392b, 0 5px 10px rgba(0,0,0,0.2);
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--border-light);
 }
 
+.back-btn svg {
+  color: var(--text-light); /* En lugar de blanco, gris suave porque el fondo es blanco */
+}
+
+/* --- TÍTULO --- */
 .levels-title {
-  font-size: 3.5rem;
-  color: white;
-  text-shadow: 4px 4px 0 #3742fa;
-  margin-bottom: 50px;
-  letter-spacing: 2px;
+  font-size: 2.5rem;
+  color: var(--text-main);
+  margin-top: 10px;
+  margin-bottom: 60px;
+  text-align: center;
 }
 
+/* --- PATH (CAMINO) --- */
 .levels-path {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 30px; /* Espacio para la línea conectora */
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
 }
 
 .level-node {
   position: relative;
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--surface);
   width: 100%;
-  padding: 20px;
-  border-radius: 25px;
-  box-shadow: 0 10px 0 #dfe4ea;
+  padding: 24px;
+  border-radius: 24px;
+  border: 2px solid var(--border-light);
+  box-shadow: 0 6px 0 var(--border-light);
   transition: transform 0.2s;
-  z-index: 2; /* Para quedar por encima de las líneas conectoras */
+  z-index: 2;
 }
 
 .level-node.unlocked {
-  cursor: pointer;
-  border: 5px solid #2ed573;
-}
-
-.level-node.unlocked:hover {
-  transform: scale(1.05);
-}
-
-.level-node.unlocked:active {
-  transform: translateY(10px) scale(1.05);
-  box-shadow: 0 0 0 #dfe4ea;
+  border-color: var(--success);
+  box-shadow: 0 8px 0 var(--success-dark);
 }
 
 .level-node.locked {
-  background: #f1f2f6;
-  border: 5px solid #a4b0be;
+  background-color: var(--bg-main);
+  border-color: var(--locked-dark);
+  box-shadow: 0 8px 0 var(--locked-dark);
   opacity: 0.8;
 }
 
+/* Círculo indicador izquierdo */
 .level-circle {
-  width: 90px;
-  height: 90px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: #f8f9fa;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 20px;
-  box-shadow: inset 0 5px 10px rgba(0,0,0,0.1);
+  margin-right: 24px;
+  flex-shrink: 0;
+}
+
+.level-node.unlocked .level-circle {
+  background-color: var(--success);
+  box-shadow: inset 0 -4px 0 var(--success-dark);
+}
+
+.level-node.locked .level-circle {
+  background-color: var(--locked);
+  box-shadow: inset 0 -4px 0 var(--locked-dark);
+}
+
+.level-circle svg {
+  color: white !important; /* Sobrescribimos el color en línea del JSX original */
+}
+
+/* Información del Nivel */
+.level-info {
+  flex-grow: 1;
 }
 
 .level-info h2 {
-  margin: 0;
-  font-size: 2rem;
-  color: #2f3542;
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+  color: var(--text-main);
 }
 
 .level-info p {
-  margin: 5px 0 10px 0;
-  font-size: 1.2rem;
-  color: #57606f;
-  font-weight: bold;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  margin-bottom: 16px;
 }
 
-.stars-container {
-  display: flex;
-  gap: 5px;
-}
-
+/* Línea conectora entre niveles */
 .path-line {
   position: absolute;
-  bottom: -40px;
-  left: 65px; /* Alineado con el centro del level-circle */
-  width: 15px;
-  height: 45px;
-  background: #ffffff;
-  z-index: 1;
-  border-radius: 10px;
-  box-shadow: inset 0 3px 6px rgba(0,0,0,0.2);
+  bottom: -40px; /* Depende del gap de .levels-path */
+  left: 64px; /* Alineado con el centro del level-circle (padding 24 + circle 40) */
+  width: 12px;
+  height: 44px;
+  background: var(--border-light);
+  z-index: -1;
+  border-radius: 6px;
 }
-.parts-container { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-.part-btn { display: flex; align-items: center; gap: 5px; padding: 8px 15px; border-radius: 15px; font-weight: bold; border: none; cursor: pointer; transition: transform 0.1s; }
-.part-unlocked { background: #3742fa; color: white; box-shadow: 0 4px 0 #2f3542; }
-.part-unlocked:active { transform: translateY(4px); box-shadow: none; }
-.part-locked { background: #dfe4ea; color: #a4b0be; cursor: not-allowed; }
+
+.level-node.unlocked .path-line {
+  background: var(--success);
+}
+
+/* --- BOTONES DE LAS PARTES (NIVELES INTERNOS) --- */
+.parts-container {
+  display: flex;
+  flex-direction: column; /* Apilados verticalmente para lectura más limpia */
+  gap: 12px;
+}
+
+.part-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1rem;
+  font-family: var(--sans);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  width: 100%;
+}
+
+.part-unlocked {
+  background-color: var(--primary);
+  color: var(--surface);
+  box-shadow: 0 4px 0 var(--primary-dark);
+}
+
+.part-unlocked:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--primary-dark);
+}
+
+.part-locked {
+  background-color: var(--locked);
+  color: var(--text-light);
+  box-shadow: 0 4px 0 var(--locked-dark);
+  cursor: not-allowed;
+}

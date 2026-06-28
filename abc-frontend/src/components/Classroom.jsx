@@ -3,20 +3,54 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Star, XCircle, RotateCcw, Map, Mic } from 'lucide-react';
 import './Classroom.css';
 
-const syllablePool = {
-  'MA': [{ word: 'manzana', icon: '🍎' }, { word: 'mano', icon: '🖐️' }, { word: 'mariposa', icon: '🦋' }],
-  'ME': [{ word: 'mesa', icon: '🪑' }, { word: 'medusa', icon: '🪼' }, { word: 'melón', icon: '🍈' }],
-  'MI': [{ word: 'miel', icon: '🍯' }, { word: 'micrófono', icon: '🎤' }, { word: 'mitad', icon: '🌗' }],
-  'MO': [{ word: 'mono', icon: '🐒' }, { word: 'moño', icon: '🎀' }, { word: 'moto', icon: '🏍️' }],
-  'MU': [{ word: 'muñeca', icon: '🎎' }, { word: 'murciélago', icon: '🦇' }, { word: 'muela', icon: '🦷' }]
+const WordImage = ({ wordObj, className }) => {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <>
+      {!imgError && (
+        <img 
+          src={`/${wordObj.word}.png`} 
+          alt={wordObj.word} 
+          className={className + " word-image"} 
+          onError={() => setImgError(true)} 
+        />
+      )}
+      {imgError && <span className={className}>{wordObj.icon}</span>}
+    </>
+  );
 };
 
-const allWords = Object.values(syllablePool).flat();
+const wordBanks = {
+  1: { // M
+    'MA': [{ word: 'manzana', icon: '🍎' }, { word: 'mano', icon: '🖐️' }, { word: 'mariposa', icon: '🦋' }, { word: 'mapa', icon: '🗺️' }, { word: 'maceta', icon: '🪴' }],
+    'ME': [{ word: 'mesa', icon: '🪑' }, { word: 'medusa', icon: '🪼' }, { word: 'melón', icon: '🍈' }, { word: 'médico', icon: '👨‍⚕️' }, { word: 'metro', icon: '📏' }],
+    'MI': [{ word: 'miel', icon: '🍯' }, { word: 'micrófono', icon: '🎤' }, { word: 'mitad', icon: '🌗' }, { word: 'microondas', icon: '♨️' }, { word: 'mimo', icon: '🎭' }],
+    'MO': [{ word: 'mono', icon: '🐒' }, { word: 'moño', icon: '🎀' }, { word: 'moto', icon: '🏍️' }, { word: 'momia', icon: '🧟' }, { word: 'montaña', icon: '⛰️' }],
+    'MU': [{ word: 'muñeca', icon: '🎎' }, { word: 'murciélago', icon: '🦇' }, { word: 'muela', icon: '🦷' }, { word: 'muro', icon: '🧱' }, { word: 'mundo', icon: '🌍' }]
+  },
+  2: { // P
+    'PA': [{ word: 'pato', icon: '🦆' }, { word: 'paraguas', icon: '☔' }, { word: 'payaso', icon: '🤡' }],
+    'PE': [{ word: 'perro', icon: '🐶' }, { word: 'pelota', icon: '⚽' }, { word: 'pez', icon: '🐟' }],
+    'PI': [{ word: 'pino', icon: '🌲' }, { word: 'pingüino', icon: '🐧' }, { word: 'pizza', icon: '🍕' }],
+    'PO': [{ word: 'pollo', icon: '🐔' }, { word: 'pozo', icon: '🕳️' }, { word: 'policía', icon: '👮' }],
+    'PU': [{ word: 'puerta', icon: '🚪' }, { word: 'puente', icon: '🌉' }, { word: 'pulpo', icon: '🐙' }]
+  },
+  3: { // S
+    'SA': [{ word: 'sapo', icon: '🐸' }, { word: 'sandía', icon: '🍉' }, { word: 'sal', icon: '🧂' }],
+    'SE': [{ word: 'serpiente', icon: '🐍' }, { word: 'semáforo', icon: '🚦' }, { word: 'semilla', icon: '🌱' }],
+    'SI': [{ word: 'silla', icon: '🪑' }, { word: 'sirena', icon: '🧜‍♀️' }, { word: 'siete', icon: '7️⃣' }],
+    'SO': [{ word: 'sol', icon: '☀️' }, { word: 'sopa', icon: '🍲' }, { word: 'sombrero', icon: '🎩' }],
+    'SU': [{ word: 'suma', icon: '➕' }, { word: 'submarino', icon: '🚢' }, { word: 'sueño', icon: '💤' }]
+  }
+};
 
 export const Classroom = () => {
-  // Ahora capturamos también el partId desde la URL
   const { levelId, partId } = useParams();
   const navigate = useNavigate();
+  
+  // Obtenemos el banco de palabras del nivel actual (o el nivel 1 por defecto)
+  const currentLevelBank = wordBanks[levelId] || wordBanks[1];
+  const allWordsInLevel = Object.values(currentLevelBank).flat();
   
   const [phase, setPhase] = useState(parseInt(partId) || 1);
   const [phaseItems, setPhaseItems] = useState([]);
@@ -30,30 +64,29 @@ export const Classroom = () => {
   const [selectedData, setSelectedData] = useState(null);
   const [options, setOptions] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
+  const [clickedOption, setClickedOption] = useState(null);
   
   const [score, setScore] = useState(0);
   const [errors, setErrors] = useState(0);
   const [gameStatus, setGameStatus] = useState('playing'); 
   
-  // Estados para el Micrófono (Fase 3)
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-
   const audioRef = useRef(null);
 
-  // Inicialización de datos según la fase
+  // Inicialización de datos para que NO se repitan las preguntas
   useEffect(() => {
-    if (phase === 2 || phase === 3) {
-      const items = Object.keys(syllablePool).map(s => {
-        const words = syllablePool[s];
-        return { ...words[Math.floor(Math.random() * words.length)], syllable: s };
-      }).sort(() => Math.random() - 0.5); // Mezclamos los 5 ítems
-      setPhaseItems(items);
-      setActiveItemIndex(phase === 3 ? 0 : null); // En Fase 3 empezamos con la carta 0
-    }
-  }, [phase]);
+    // Generamos una lista mezclada de las 5 sílabas para usarlas en orden (evita repetidas en todas las fases)
+    const shuffledSyllables = Object.keys(currentLevelBank).sort(() => Math.random() - 0.5);
+    const items = shuffledSyllables.map(s => {
+      const words = currentLevelBank[s];
+      return { ...words[Math.floor(Math.random() * words.length)], syllable: s };
+    });
+    setPhaseItems(items);
+    setActiveItemIndex(phase === 3 ? 0 : null);
+  }, [phase, levelId]); // Se re-calcula al cambiar de fase o nivel
 
   const playAudio = async (text) => {
     if (audioRef.current) {
@@ -81,21 +114,31 @@ export const Classroom = () => {
     setIsSpinning(true);
     setShowOptions(false);
     
-    const syllables = Object.keys(syllablePool);
-    const randomSyllableIndex = Math.floor(Math.random() * syllables.length);
-    const targetSyllable = syllables[randomSyllableIndex];
-    const correctWord = syllablePool[targetSyllable][0];
-    const incorrectWord = allWords.filter(w => w.word !== correctWord.word)[Math.floor(Math.random() * (allWords.length - 1))];
+    // Usamos el 'score' actual como índice para tomar la siguiente palabra pre-mezclada sin repetir
+    const targetWordObj = phaseItems[score];
+    const targetSyllable = targetWordObj.syllable;
+    const correctWord = targetWordObj;
+    
+    // Elegimos una palabra incorrecta que NO empiece con la misma sílaba
+    const validIncorrectWords = allWordsInLevel.filter(w => {
+      // Para saber si es de la misma sílaba, verificamos si está en el array de targetSyllable
+      return !currentLevelBank[targetSyllable].some(cw => cw.word === w.word);
+    });
+    const incorrectWord = validIncorrectWords[Math.floor(Math.random() * validIncorrectWords.length)];
 
     setSelectedData({ syllable: targetSyllable, correct: correctWord });
-    setRotation(prev => prev + 1800 + (360 - (randomSyllableIndex * 72)) - (prev % 360)); 
+    
+    // Calculamos el índice visual para que la ruleta apunte a la correcta
+    const syllables = Object.keys(currentLevelBank);
+    const targetVisualIndex = syllables.indexOf(targetSyllable);
+    setRotation(prev => prev + 1800 + (360 - (targetVisualIndex * 72)) - (prev % 360)); 
 
     setTimeout(() => {
       setIsSpinning(false);
       const shuffledOptions = [correctWord, incorrectWord].sort(() => Math.random() - 0.5);
       setOptions(shuffledOptions);
       setShowOptions(true);
-      playAudio(`¿Qué palabra comienza con ${targetSyllable}?`);
+      playAudio(`¿Qué palabra comienza con ${targetSyllable}? ¿${shuffledOptions[0].word}, o ${shuffledOptions[1].word}?`);
     }, 3000);
   };
 
@@ -105,18 +148,20 @@ export const Classroom = () => {
     setActiveItemIndex(index);
     setChestState('shaking');
 
-    const targetWordObj = phaseItems[index];
+    const targetWordObj = phaseItems[score];
     const targetSyllable = targetWordObj.syllable;
-    const incorrectSyllable = Object.keys(syllablePool).find(s => s !== targetSyllable);
+    const otherSyllables = Object.keys(currentLevelBank).filter(s => s !== targetSyllable);
+    const incorrectSyllable = otherSyllables[Math.floor(Math.random() * otherSyllables.length)];
 
     setSelectedData({ wordObj: targetWordObj, correct: targetSyllable });
-    setOptions([targetSyllable, incorrectSyllable].sort(() => Math.random() - 0.5));
+    const shuffledOptions = [targetSyllable, incorrectSyllable].sort(() => Math.random() - 0.5);
+    setOptions(shuffledOptions);
 
     setTimeout(() => {
       setChestState('opened');
       setTimeout(() => {
         setShowOptions(true);
-        playAudio(`¿Con qué sílaba comienza ${targetWordObj.word}?`);
+        playAudio(`¿Con qué sílaba comienza ${targetWordObj.word}? ¿Con ${shuffledOptions[0]}, o con ${shuffledOptions[1]}?`);
       }, 1500);
     }, 1000);
   };
@@ -132,6 +177,11 @@ const flipCard = () => {
   };
 
   const startRecording = async () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -174,8 +224,9 @@ const flipCard = () => {
       const recognizedText = data.text.toLowerCase();
       const expectedSyllable = phaseItems[activeItemIndex].syllable.toLowerCase();
       
-      // Verificamos si Vosk entendió la sílaba (ej. si dice "ma", "más" o "mamá")
-      if (recognizedText.includes(expectedSyllable) || recognizedText.includes(expectedSyllable[0])) {
+      // Verificamos si Vosk entendió la sílaba (ej. si dice "mo", "moto" o "mono")
+      // Ya no comprobamos solo la primera letra para evitar que "ma" sea válido cuando se espera "mo".
+      if (recognizedText.includes(expectedSyllable)) {
          handleWinRound();
       } else {
          handleLoseRound();
@@ -204,7 +255,7 @@ const flipCard = () => {
       if (phase < 3) {
         playAudio("¡Excelente! Has completado esta parte. Vamos a la siguiente.");
         setPhase(phase + 1);
-        setScore(0); setErrors(0); setShowOptions(false); setChestState('idle');
+        setScore(0); setErrors(0); setShowOptions(false); setChestState('idle'); setClickedOption(null);
       } else {
         setGameStatus('won');
         playAudio("¡Felicidades! Has completado todas las partes del nivel. ¡Eres increíble!");
@@ -215,7 +266,7 @@ const flipCard = () => {
         setChestState('idle');
         setActiveItemIndex(prev => prev + 1);
       } else {
-        setTimeout(() => { setShowOptions(false); setChestState('idle'); setActiveItemIndex(null); }, 2500);
+        setTimeout(() => { setShowOptions(false); setChestState('idle'); setActiveItemIndex(null); setClickedOption(null); }, 2500);
       }
     }
   };
@@ -229,17 +280,19 @@ const flipCard = () => {
       playAudio("¡Oh no! Tuvimos tres errores. Pero no pasa nada, ¡reintentemos esta parte!");
     } else {
       playAudio("Casi... Esa no es la correcta. ¡Intenta de nuevo!");
-      if (phase < 3) setTimeout(() => { setShowOptions(false); setChestState('idle'); setActiveItemIndex(null); }, 2500);
+      if (phase < 3) setTimeout(() => { setShowOptions(false); setChestState('idle'); setActiveItemIndex(null); setClickedOption(null); }, 2500);
     }
   };
 
-  const handleOptionClick = (option) => {
+  const handleOptionClick = (option, index) => {
+    if (clickedOption !== null) return;
+    setClickedOption(index);
     const isCorrect = phase === 1 ? option.word === selectedData.correct.word : option === selectedData.correct;
     if (isCorrect) handleWinRound(); else handleLoseRound();
   };
 
   const resetGame = () => {
-    setScore(0); setErrors(0); setGameStatus('playing'); setShowOptions(false); setChestState('idle'); setActiveItemIndex(phase === 3 ? 0 : null);
+    setScore(0); setErrors(0); setGameStatus('playing'); setShowOptions(false); setChestState('idle'); setActiveItemIndex(phase === 3 ? 0 : null); setClickedOption(null);
   };
 
   useEffect(() => { return () => { if (audioRef.current) audioRef.current.pause(); }; }, []);
@@ -272,7 +325,7 @@ const flipCard = () => {
             <div className="wheel-section">
               <div className="wheel-pointer">▼</div>
               <div className="wheel" style={{ transform: `rotate(${rotation}deg)`, transition: isSpinning ? 'transform 3s ease-out' : 'none' }}>
-                {Object.keys(syllablePool).map((syllable, index) => (
+                {Object.keys(currentLevelBank).map((syllable, index) => (
                   <div key={syllable} className="wheel-slice" style={{ transform: `rotate(${index * 72}deg)` }}>
                     <span className="syllable-text">{syllable}</span>
                   </div>
@@ -301,7 +354,7 @@ const flipCard = () => {
                   return (
                     <div key={index} className={chestClass} onClick={() => handleChestClick(index)}>
                       {activeItemIndex === index && chestState === 'opened' ? (
-                        <span className="target-icon-large">{selectedData?.wordObj?.icon}</span>
+                        selectedData?.wordObj && <WordImage wordObj={selectedData.wordObj} className="target-icon-large" />
                       ) : <span className="chest-icon">🎁</span>}
                     </div>
                   );
@@ -316,19 +369,24 @@ const flipCard = () => {
               <div className="target-syllable">
                 {phase === 1 ? <h2>{selectedData.syllable}</h2> : (
                   <div className="target-word">
-                    <span className="target-icon-large">{selectedData.wordObj.icon}</span>
+                    <WordImage wordObj={selectedData.wordObj} className="target-icon-large" />
                     <h2 className="target-word-text">{selectedData.wordObj.word.toUpperCase()}</h2>
                   </div>
                 )}
               </div>
               <div className="cards-wrapper">
-                {options.map((opt, i) => (
-                  <button key={i} className="option-card" onClick={() => handleOptionClick(opt)}>
-                    {phase === 1 ? (
-                      <><span className="option-icon">{opt.icon}</span><span className="option-word">{opt.word.toUpperCase()}</span></>
-                    ) : <span className="option-syllable-large">{opt}</span>}
-                  </button>
-                ))}
+                {options.map((opt, i) => {
+                  let cardClass = "option-card";
+                  if (clickedOption !== null && clickedOption !== i) cardClass += " disabled-option";
+                  if (clickedOption === i) cardClass += " selected-option";
+                  return (
+                    <button key={i} className={cardClass} onClick={() => handleOptionClick(opt, i)} disabled={clickedOption !== null}>
+                      {phase === 1 ? (
+                        <><WordImage wordObj={opt} className="option-icon" /><span className="option-word">{opt.word.toUpperCase()}</span></>
+                      ) : <span className="option-syllable-large">{opt}</span>}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -353,7 +411,7 @@ const flipCard = () => {
                     >
                       {isActive && chestState === 'opened' || isDone ? (
                         <div className="card-front">
-                          <span className="card-icon">{item.icon}</span>
+                          <WordImage wordObj={item} className="card-icon" />
                         </div>
                       ) : (
                         <div className="card-back">❓</div>

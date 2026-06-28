@@ -1,49 +1,107 @@
-import pool from '../config/db.js';
+/**
+ * @module models/Session
+ * @description Modelo de Sesiones para MongoDB.
+ * 
+ * Registra cada sesión de práctica del niño con sus estadísticas.
+ * Al guardar una sesión, también actualiza los puntos totales del usuario
+ * de forma atómica usando una transacción de MongoDB.
+ */
+import mongoose from 'mongoose';
 
-class SessionModel {
-    static async saveSessionAndUpdatePoints(userId, duration, correctWords, incorrectWords, isDiagnostic, pointsEarned) {
-        // Solicitamos un cliente exclusivo del pool para la transacción
-        const client = await pool.connect();
-        
-        try {
-            // Iniciamos la transacción
-            await client.query('BEGIN');
+const sessionSchema = new mongoose.Schema({
+  // Referencia al usuario que realizó la sesión
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  // Fecha y hora en que se realizó la sesión
+  sessionDate: {
+    type: Date,
+    default: Date.now
+  },
+  // Duración total de la sesión en segundos
+  durationSeconds: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Cantidad de palabras acertadas
+  correctWords: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Cantidad de palabras falladas
+  incorrectWords: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Indica si esta sesión fue el test diagnóstico inicial
+  isDiagnosticTest: {
+    type: Boolean,
+    default: false
+  }
+}, {
+  timestamps: true
+});
 
-            // 1. Insertamos la sesión
-            const insertSessionQuery = `
-                INSERT INTO sessions (user_id, duration_seconds, correct_words, incorrect_words, is_diagnostic_test)
-                VALUES ($1, $2, $3, $4, $5)
-                RETURNING id, session_date
-            `;
-            const sessionValues = [userId, duration, correctWords, incorrectWords, isDiagnostic];
-            const sessionResult = await client.query(insertSessionQuery, sessionValues);
-            const newSession = sessionResult.rows[0];
+// ─── Métodos Estáticos ────────────────────────────────────────────
 
-            // 2. Actualizamos los puntos totales del usuario
-            if (pointsEarned > 0) {
-                const updatePointsQuery = `
-                    UPDATE users 
-                    SET total_points = total_points + $1 
-                    WHERE id = $2
-                `;
-                await client.query(updatePointsQuery, [pointsEarned, userId]);
-            }
+/**
+ * Guarda una sesión y actualiza los puntos totales del usuario.
+ * Usa una transacción de MongoDB para garantizar consistencia:
+ * si falla la actualización de puntos, se revierte la sesión.
+ * 
+ * @param {string} userId - ObjectId del usuario.
+ * @param {number} duration - Duración en segundos.
+ * @param {number} correctWords - Palabras acertadas.
+ * @param {number} incorrectWords - Palabras falladas.
+ * @param {boolean} isDiagnostic - Si es test diagnóstico.
+ * @param {number} pointsEarned - Puntos ganados en la sesión.
+ * @returns {Promise<Object>} La sesión creada.
+ */
+sessionSchema.statics.saveSessionAndUpdatePoints = async function (
+  userId, duration, correctWords, incorrectWords, isDiagnostic, pointsEarned
+) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-            // Confirmamos los cambios en la base de datos
-            await client.query('COMMIT');
-            
-            return newSession;
-            
-        } catch (error) {
-            // Si algo falla, revertimos todos los cambios
-            await client.query('ROLLBACK');
-            console.error("Error en la transacción de sesión:", error);
-            throw error; // Lanzamos el error para que el controlador lo maneje
-        } finally {
-            // MUY IMPORTANTE: Devolvemos el cliente al pool
-            client.release();
-        }
+  try {
+    // 1. Creamos la sesión de práctica
+    const [newSession] = await this.create([{
+      userId,
+      durationSeconds: duration,
+      correctWords,
+      incorrectWords,
+      isDiagnosticTest: isDiagnostic
+    }], { session });
+
+    // 2. Sumamos los puntos al registro maestro del usuario
+    if (pointsEarned > 0) {
+      const User = mongoose.model('User');
+      await User.findByIdAndUpdate(
+        userId,
+        { $inc: { totalPoints: pointsEarned } },
+        { session }
+      );
     }
-}
 
-export default SessionModel;
+    // Confirmamos ambas operaciones
+    await session.commitTransaction();
+    return newSession;
+
+  } catch (error) {
+    // Si algo falla, revertimos todo
+    await session.abortTransaction();
+    console.error('❌ Error en transacción de sesión:', error);
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+const Session = mongoose.model('Session', sessionSchema);
+export default Session;

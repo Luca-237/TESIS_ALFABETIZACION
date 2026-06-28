@@ -1,37 +1,77 @@
-import pool from '../config/db.js';
+/**
+ * @module models/User
+ * @description Modelo de Usuario para MongoDB.
+ * 
+ * Almacena los datos del perfil sincronizados desde Clerk Auth,
+ * junto con los puntos acumulados y la preferencia de tema visual.
+ */
+import mongoose from 'mongoose';
 
-class UserModel {
-    static async findByClerkId(clerkId) {
-        const query = `
-            SELECT id, name, email, total_points, theme_preference 
-            FROM users 
-            WHERE clerk_id = $1
-        `;
-        const { rows } = await pool.query(query, [clerkId]);
-        return rows[0]; // Retorna el usuario o undefined si no existe
-    }
+const userSchema = new mongoose.Schema({
+  // ID único de Clerk Auth — vincula el usuario externo con la DB local
+  clerkId: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  profileImageUrl: {
+    type: String,
+    default: null
+  },
+  // Puntos totales acumulados en el "registro maestro" del jugador
+  totalPoints: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Preferencia visual: modo claro u oscuro
+  themePreference: {
+    type: String,
+    enum: ['light', 'dark'],
+    default: 'light'
+  }
+}, {
+  timestamps: true  // Agrega createdAt y updatedAt automáticamente
+});
 
-    static async create(clerkId, name, email, profileImageUrl) {
-        const query = `
-            INSERT INTO users (clerk_id, name, email, profile_image_url)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id, clerk_id, name, total_points, theme_preference
-        `;
-        const values = [clerkId, name, email, profileImageUrl];
-        const { rows } = await pool.query(query, values);
-        return rows[0];
-    }
+// ─── Métodos Estáticos ────────────────────────────────────────────
 
-    static async updateThemePreference(userId, theme) {
-        const query = `
-            UPDATE users 
-            SET theme_preference = $1 
-            WHERE id = $2 
-            RETURNING id, theme_preference
-        `;
-        const { rows } = await pool.query(query, [theme, userId]);
-        return rows[0];
-    }
-}
+/**
+ * Busca un usuario por su Clerk ID.
+ * @param {string} clerkId - ID del usuario en Clerk Auth.
+ * @returns {Promise<Object|null>} El usuario encontrado o null.
+ */
+userSchema.statics.findByClerkId = function (clerkId) {
+  return this.findOne({ clerkId })
+    .select('name email totalPoints themePreference profileImageUrl');
+};
 
-export default UserModel;
+/**
+ * Actualiza la preferencia de tema (light/dark) de un usuario.
+ * @param {string} userId - ObjectId del usuario en MongoDB.
+ * @param {string} theme - 'light' o 'dark'.
+ * @returns {Promise<Object|null>} El usuario actualizado.
+ */
+userSchema.statics.updateThemePreference = function (userId, theme) {
+  return this.findByIdAndUpdate(
+    userId,
+    { themePreference: theme },
+    { new: true, select: 'themePreference' }
+  );
+};
+
+const User = mongoose.model('User', userSchema);
+export default User;

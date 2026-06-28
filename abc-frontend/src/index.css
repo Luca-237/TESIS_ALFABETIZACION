@@ -1,111 +1,102 @@
+/* ─── FitoABC - Variables Globales (Estilo Duolingo) ──────────────────────────── */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Paleta de Colores Vibrantes */
+  --primary: #1CB0F6;       /* Azul cielo principal */
+  --primary-dark: #1899D6;  /* Azul cielo sombra */
+  
+  --success: #58CC02;       /* Verde correcto/jugar */
+  --success-dark: #58A700;  /* Verde sombra */
+  
+  --danger: #FF4B4B;        /* Rojo error/cerrar */
+  --danger-dark: #EA2B2B;   /* Rojo sombra */
+  
+  --warning: #FFC800;       /* Amarillo estrellas/monedas */
+  --warning-dark: #F49000;  /* Amarillo sombra */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --secondary: #CE82FF;     /* Morado acento */
+  --secondary-dark: #A560D3;/* Morado sombra */
 
+  --locked: #E5E5E5;        /* Gris bloqueado */
+  --locked-dark: #AFAFAF;   /* Gris sombra bloqueado */
+
+  /* Colores de Fondo y Texto */
+  --bg-main: #F7F7F7;       /* Fondo general limpio */
+  --surface: #FFFFFF;       /* Fondo de tarjetas/botones blancos */
+  --text-main: #4B4B4B;     /* Texto gris oscuro (no negro) para suavidad */
+  --text-light: #AFAFAF;    /* Texto gris claro */
+  --border-light: #E5E5E5;  /* Bordes sutiles */
+
+  /* Tipografía Amigable */
+  --sans: 'Nunito', system-ui, -apple-system, sans-serif;
+  
   font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--text-main);
+  background: var(--bg-main);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* ─── Reset Global ───────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+  background-color: var(--bg-main);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+/* ─── Contenedor Raíz ────────────────────────────────────────── */
+#root {
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
+
+/* ─── Tipografía Base ────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--sans);
+  font-weight: 800;
+  margin: 0;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
 }
+
 p {
   margin: 0;
+  font-weight: 600;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
+/* ─── Clases Utilitarias (Botones 3D) ────────────────────────── */
+/* Estas clases pueden ser usadas globalmente para mantener la consistencia */
+
+.btn-3d {
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  justify-content: center;
+  align-items: center;
+  border-radius: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  border: none;
+  padding: 12px 24px;
+  user-select: none;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.btn-3d:active:not(:disabled) {
+  transform: translateY(4px);
+  /* El box-shadow se ajustará dinámicamente en las clases específicas */
+}
+
+.btn-3d:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
 }

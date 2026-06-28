@@ -1,75 +1,92 @@
-import pool from '../config/db.js';
+/**
+ * @module utils/seeder
+ * @description Script para poblar la base de datos con datos iniciales.
+ * 
+ * Inserta los niveles de la currícula y el diccionario de contenido
+ * base necesario para que FitoABC funcione. Verifica si ya existen
+ * datos para no duplicar registros.
+ * 
+ * Uso: npm run seed
+ */
+import 'dotenv/config';
+import mongoose from 'mongoose';
+import Level from '../models/levelModel.js';
+import Content from '../models/contentModel.js';
+import Activity from '../models/activityModel.js';
 
+/**
+ * Ejecuta el poblado de la base de datos.
+ */
 const seedDatabase = async () => {
-    const client = await pool.connect();
+  try {
+    // Conectamos directamente a MongoDB Atlas
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('✅ Conectado a MongoDB Atlas para seeding');
 
-    try {
-        await client.query('BEGIN');
-
-        // 1. Verificar si ya existen niveles para no duplicar datos
-        const checkLevels = await client.query('SELECT COUNT(*) FROM levels');
-        if (parseInt(checkLevels.rows[0].count) > 0) {
-            console.log('La base de datos ya tiene datos. Omitiendo seeder.');
-            return;
-        }
-
-        console.log('Iniciando el poblado (seeding) de la base de datos...');
-
-        // 2. Insertar los Niveles Base (Extraídos de tus requerimientos)
-        const levelsData = [
-            { order: 1, title: 'Construcción de sílabas', desc: 'Aprender sílabas básicas como ma-me-mi.', diag: false },
-            { order: 2, title: 'Lectura de sílabas en palabras', desc: 'Identificar sílabas verdes en palabras simples.', diag: false },
-            { order: 3, title: 'Orden de sílabas simples', desc: 'Juego para ordenar sílabas.', diag: false },
-            { order: 4, title: 'Lectura de palabra simple', desc: 'Leer la palabra para revelar la imagen oculta.', diag: false },
-            { order: 5, title: 'Sílabas complejas', desc: 'Aprender sílabas como bra, tre, gri.', diag: false },
-            { order: 6, title: 'Test Diagnóstico', desc: 'Evaluación inicial de lectura.', diag: true }
-        ];
-
-        // Insertamos y guardamos los IDs generados para usarlos en el diccionario
-        const levelIds = {};
-        for (const lvl of levelsData) {
-            const res = await client.query(
-                `INSERT INTO levels (level_order, title, description, is_diagnostic) 
-                 VALUES ($1, $2, $3, $4) RETURNING id, level_order`,
-                [lvl.order, lvl.title, lvl.desc, lvl.diag]
-            );
-            levelIds[lvl.order] = res.rows[0].id; // Mapeamos: order -> id
-        }
-
-        // 3. Insertar Diccionario de Contenido vinculado a los niveles
-        const dictionaryData = [
-            // Nivel 1: Construcción de Sílabas
-            { level_id: levelIds[1], word: 'mama', syllables: ['ma', 'ma'], img: '/assets/mama.png', complex: false },
-            { level_id: levelIds[1], word: 'mesa', syllables: ['me', 'sa'], img: '/assets/mesa.png', complex: false },
-            
-            // Nivel 4: Palabras Simples (Imágenes que saltan)
-            { level_id: levelIds[4], word: 'pato', syllables: ['pa', 'to'], img: '/assets/pato.png', complex: false },
-            { level_id: levelIds[4], word: 'sol', syllables: ['sol'], img: '/assets/sol.png', complex: false },
-
-            // Nivel 5: Sílabas Complejas
-            { level_id: levelIds[5], word: 'brazo', syllables: ['bra', 'zo'], img: '/assets/brazo.png', complex: true },
-            { level_id: levelIds[5], word: 'tigre', syllables: ['ti', 'gre'], img: '/assets/tigre.png', complex: true }
-        ];
-
-        for (const dict of dictionaryData) {
-            await client.query(
-                `INSERT INTO content_dictionary (level_id, word, syllables, image_url, is_complex_syllable) 
-                 VALUES ($1, $2, $3, $4, $5)`,
-                [dict.level_id, dict.word, dict.syllables, dict.img, dict.complex]
-            );
-        }
-
-        await client.query('COMMIT');
-        console.log('Seeding completado con éxito. ¡FitoABC está listo!');
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error durante el seeding:', error);
-    } finally {
-        client.release();
-        // Cerramos el pool para que el script termine su ejecución
-        await pool.end(); 
+    // ─── Verificación ─────────────────────────────────────────
+    const existingLevels = await Level.countDocuments();
+    if (existingLevels > 0) {
+      console.log('ℹ️  La base de datos ya tiene datos. Omitiendo seeder.');
+      return;
     }
+
+    console.log('🌱 Iniciando el poblado (seeding) de la base de datos...');
+
+    // ─── 1. Insertar Niveles ──────────────────────────────────
+    const levelsData = [
+      { levelOrder: 1, title: 'Construcción de sílabas', description: 'Aprender sílabas básicas como ma-me-mi.', isDiagnostic: false },
+      { levelOrder: 2, title: 'Lectura de sílabas en palabras', description: 'Identificar sílabas verdes en palabras simples.', isDiagnostic: false },
+      { levelOrder: 3, title: 'Orden de sílabas simples', description: 'Juego para ordenar sílabas.', isDiagnostic: false },
+      { levelOrder: 4, title: 'Lectura de palabra simple', description: 'Leer la palabra para revelar la imagen oculta.', isDiagnostic: false },
+      { levelOrder: 5, title: 'Sílabas complejas', description: 'Aprender sílabas como bra, tre, gri.', isDiagnostic: false },
+      { levelOrder: 6, title: 'Test Diagnóstico', description: 'Evaluación inicial de lectura.', isDiagnostic: true },
+    ];
+
+    const levels = await Level.insertMany(levelsData);
+    console.log(`   ✓ ${levels.length} niveles insertados`);
+
+    // Creamos un mapa levelOrder → ObjectId para vincular el diccionario
+    const levelMap = {};
+    levels.forEach(lvl => { levelMap[lvl.levelOrder] = lvl._id; });
+
+    // ─── 2. Insertar Diccionario de Contenido ─────────────────
+    const dictionaryData = [
+      // Nivel 1: Construcción de Sílabas
+      { levelId: levelMap[1], word: 'mama', syllables: ['ma', 'ma'], imageUrl: '/assets/mama.png' },
+      { levelId: levelMap[1], word: 'mesa', syllables: ['me', 'sa'], imageUrl: '/assets/mesa.png' },
+
+      // Nivel 4: Palabras Simples (imágenes que saltan al acertar)
+      { levelId: levelMap[4], word: 'pato', syllables: ['pa', 'to'], imageUrl: '/assets/pato.png' },
+      { levelId: levelMap[4], word: 'sol', syllables: ['sol'], imageUrl: '/assets/sol.png' },
+
+      // Nivel 5: Sílabas Complejas
+      { levelId: levelMap[5], word: 'brazo', syllables: ['bra', 'zo'], imageUrl: '/assets/brazo.png' },
+      { levelId: levelMap[5], word: 'tigre', syllables: ['ti', 'gre'], imageUrl: '/assets/tigre.png' },
+    ];
+
+    const content = await Content.insertMany(dictionaryData);
+    console.log(`   ✓ ${content.length} palabras del diccionario insertadas`);
+
+    // ─── 3. Insertar Actividades / Minijuegos ─────────────────
+    const activitiesData = [
+      { name: 'Ruleta de Letras', activityType: 'roulette' },
+      { name: 'Abrecajas', activityType: 'box_opening' },
+      { name: 'Une las Parejas', activityType: 'matching' },
+      { name: 'Lectura Guiada', activityType: 'reading' },
+      { name: 'Ordená las Sílabas', activityType: 'ordering' },
+    ];
+
+    const activities = await Activity.insertMany(activitiesData);
+    console.log(`   ✓ ${activities.length} actividades insertadas`);
+
+    console.log('🎉 Seeding completado con éxito. ¡FitoABC está listo!');
+
+  } catch (error) {
+    console.error('❌ Error durante el seeding:', error);
+  } finally {
+    await mongoose.disconnect();
+    console.log('🔌 Desconectado de MongoDB Atlas');
+  }
 };
 
 seedDatabase();

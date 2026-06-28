@@ -21,7 +21,20 @@ export const LevelSelection = () => {
     { 
       id: 2, 
       title: 'Sílabas con P', 
-      parts: [{ id: 1, name: 'Próximamente...' }] 
+      parts: [
+        { id: 1, name: 'La Ruleta (Sílaba a Palabra)' },
+        { id: 2, name: 'Los Cofres (Palabra a Sílaba)' },
+        { id: 3, name: 'Las Cartas (¡Usa tu Voz!)' }
+      ] 
+    },
+    { 
+      id: 3, 
+      title: 'Sílabas con S', 
+      parts: [
+        { id: 1, name: 'La Ruleta (Sílaba a Palabra)' },
+        { id: 2, name: 'Los Cofres (Palabra a Sílaba)' },
+        { id: 3, name: 'Las Cartas (¡Usa tu Voz!)' }
+      ] 
     }
   ];
 

@@ -1,26 +1,28 @@
+/**
+ * @module routes/voiceRoutes
+ * @description Rutas del motor de voz (STT y TTS).
+ * 
+ * Endpoints protegidos:
+ * - POST  /api/voice/listen  → Enviar audio del micrófono para transcribir
+ * - POST  /api/voice/speak   → Enviar texto para generar audio hablado
+ */
 import { Router } from 'express';
 import multer from 'multer';
-import { requireAuth } from '@clerk/express';
+import authMiddleware from '../middlewares/authMiddleware.js';
 import { processSpeech, generateSpeech } from '../controllers/voiceController.js';
 
 const router = Router();
-// Guardamos los audios temporalmente en la carpeta /tmp o en disco local
+
+// Multer guarda los audios temporalmente en disco (se eliminan tras procesar)
 const upload = multer({ dest: 'uploads/' });
 
-// BYPASS TEMPORAL PARA PRUEBAS EN BRUNO (Igual que en userRoutes):
-const mockRequireAuth = () => {
-    return (req, res, next) => {
-        req.auth = { userId: 'user_prueba_123' }; 
-        next();
-    };
-};
+// Todas las rutas de voz requieren autenticación
+router.use(authMiddleware);
 
-router.use(mockRequireAuth());
-
-// POST /api/voice/listen -> Recibe el audio del micrófono del frontend
+// STT: Recibe audio del micrófono del frontend
 router.post('/listen', upload.single('audio'), processSpeech);
 
-// POST /api/voice/speak -> Recibe texto y devuelve un archivo de audio MP3
+// TTS: Recibe texto y devuelve audio MP3
 router.post('/speak', generateSpeech);
 
 export default router;

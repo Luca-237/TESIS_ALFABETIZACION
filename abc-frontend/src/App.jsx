@@ -10,7 +10,7 @@ function App() {
   return (
     <Routes>
       <Route path="/sign-in/*" element={
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f0f8ff' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh', width: '100%', background: '#f0f8ff' }}>
           <SignIn routing="path" path="/sign-in" />
         </div>
       } />
