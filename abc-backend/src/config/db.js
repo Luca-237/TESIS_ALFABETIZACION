@@ -15,7 +15,8 @@ export const connectDB = async () => {
     console.log(`✅ MongoDB Atlas conectado: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ Error de conexión a MongoDB Atlas: ${error.message}`);
-    process.exit(1);
+    console.warn(`⚠️  El servidor iniciará sin conexión a la base de datos (algunos endpoints podrían fallar).`);
+    // process.exit(1); // Comentado para permitir que el servidor arranque sin BD
   }
 };
 

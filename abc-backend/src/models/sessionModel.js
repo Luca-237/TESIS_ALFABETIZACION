@@ -39,6 +39,27 @@ const sessionSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  // Nivel principal de esta sesión (opcional)
+  levelId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Level'
+  },
+  // Sub-nivel específico de esta sesión (opcional)
+  subLevelId: {
+    type: String
+  },
+  // Energía restante al final de la sesión
+  fitoCookies: {
+    type: Number,
+    default: 5,
+    min: 0
+  },
+  // Veces que se activó el minijuego de descanso para evitar frustración
+  frustrationMinigamesTriggered: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   // Indica si esta sesión fue el test diagnóstico inicial
   isDiagnosticTest: {
     type: Boolean,
@@ -61,10 +82,11 @@ const sessionSchema = new mongoose.Schema({
  * @param {number} incorrectWords - Palabras falladas.
  * @param {boolean} isDiagnostic - Si es test diagnóstico.
  * @param {number} pointsEarned - Puntos ganados en la sesión.
+ * @param {Object} gamificationData - Objeto con { fitoCookies, frustrationMinigamesTriggered, levelId, subLevelId }.
  * @returns {Promise<Object>} La sesión creada.
  */
 sessionSchema.statics.saveSessionAndUpdatePoints = async function (
-  userId, duration, correctWords, incorrectWords, isDiagnostic, pointsEarned
+  userId, duration, correctWords, incorrectWords, isDiagnostic, pointsEarned, gamificationData = {}
 ) {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -76,7 +98,11 @@ sessionSchema.statics.saveSessionAndUpdatePoints = async function (
       durationSeconds: duration,
       correctWords,
       incorrectWords,
-      isDiagnosticTest: isDiagnostic
+      isDiagnosticTest: isDiagnostic,
+      levelId: gamificationData.levelId,
+      subLevelId: gamificationData.subLevelId,
+      fitoCookies: gamificationData.fitoCookies ?? 5,
+      frustrationMinigamesTriggered: gamificationData.frustrationMinigamesTriggered ?? 0
     }], { session });
 
     // 2. Sumamos los puntos al registro maestro del usuario

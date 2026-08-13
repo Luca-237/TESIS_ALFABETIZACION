@@ -2,84 +2,14 @@
  * @module controllers/voiceController
  * @description Controlador del Motor de Voz.
  * 
- * Maneja los dos endpoints de voz de FitoABC:
- * 1. STT (Speech-to-Text): Escucha al niño usando Vosk offline.
- * 2. TTS (Text-to-Speech): Le habla al niño usando Google TTS en RAM.
+ * Maneja el endpoint de voz de FitoABC:
+ * 1. TTS (Text-to-Speech): Le habla al niño usando Google TTS en RAM.
  * 
- * Ninguno de estos endpoints depende de la base de datos.
+ * Este endpoint no depende de la base de datos.
  */
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import vosk from 'vosk';
 import * as googleTTS from 'google-tts-api';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 
-// Configuramos la ruta del binario de FFmpeg
-ffmpeg.setFfmpegPath(ffmpegInstaller.path);
-
-// ─── Inicialización de Vosk (STT offline) ─────────────────────────
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const modelPath = path.join(__dirname, '../utils/vosk-model-es');
-
-let model;
-try {
-  vosk.setLogLevel(0); // Silenciar logs internos de Vosk
-  model = new vosk.Model(modelPath);
-  console.log('✅ Modelo de Vosk cargado exitosamente.');
-} catch (error) {
-  console.error('⚠️  No se encontró el modelo de Vosk en:', modelPath);
-}
-
-// ─── Endpoint 1: Speech-to-Text ───────────────────────────────────
-
-/**
- * POST /api/voice/listen
- * Recibe un archivo de audio del micrófono del frontend,
- * lo convierte a WAV 16kHz mono con FFmpeg, y lo transcribe con Vosk.
- * Los archivos temporales se eliminan después de procesar.
- */
-export const processSpeech = (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No se envió ningún archivo de audio' });
-  }
-
-  const inputPath = req.file.path;
-  const outputPath = `${inputPath}.wav`;
-
-  try {
-    ffmpeg(inputPath)
-      .toFormat('wav')
-      .audioChannels(1)       // Mono (requerido por Vosk)
-      .audioFrequency(16000)  // 16kHz (requerido por Vosk)
-      .on('end', () => {
-        // Transcribimos el audio convertido
-        const rec = new vosk.Recognizer({ model: model, sampleRate: 16000 });
-        const buffer = fs.readFileSync(outputPath);
-        rec.acceptWaveform(buffer);
-        const result = rec.finalResult();
-
-        // Limpiamos archivos temporales del disco
-        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);
-
-        res.status(200).json({ text: result.text });
-        rec.free();
-      })
-      .on('error', (err) => {
-        console.error('❌ Error convirtiendo audio:', err);
-        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        res.status(500).json({ error: 'Error procesando el audio' });
-      })
-      .save(outputPath);
-  } catch (error) {
-    console.error('❌ Error general procesando voz:', error);
-    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-};
+// ─── Endpoint: Text-to-Speech ───────────────────────────────────
 
 // ─── Endpoint 2: Text-to-Speech ───────────────────────────────────
 

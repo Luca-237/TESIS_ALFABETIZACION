@@ -42,7 +42,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['light', 'dark'],
     default: 'light'
-  }
+  },
+  // Cola de Repetición Espaciada para registrar palabras falladas
+  spacedRepetitionQueue: [{
+    word: { type: String, required: true },
+    syllable: { type: String, required: true },
+    errorCount: { type: Number, default: 1 },
+    weight: { type: Number, default: 2 },
+    lastFailed: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true  // Agrega createdAt y updatedAt automáticamente
 });

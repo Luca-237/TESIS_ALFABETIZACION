@@ -15,25 +15,43 @@ const progressSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  // Referencia al nivel asociado
+  // Nivel principal (ej. Nivel 1)
   levelId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Level',
     required: true
   },
-  // Estado actual del nivel para este usuario
+  // Sub-nivel específico (ej. "1-2" o "3-1")
+  subLevelId: {
+    type: String,
+    required: true
+  },
+  // Estado actual del sub-nivel para este usuario
   status: {
     type: String,
     enum: ['locked', 'in_progress', 'completed'],
     default: 'in_progress'
   },
-  // Puntaje más alto obtenido en este nivel
+  // Puntaje o experiencia ganada en este sub-nivel
   score: {
     type: Number,
     default: 0,
     min: 0
   },
-  // Fecha en que se completó el nivel (null si no se completó aún)
+  // Precisión más alta obtenida (porcentaje 0-100)
+  accuracyPercentage: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+  // Racha de aciertos consecutivos más alta en este sub-nivel
+  highestStreak: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // Fecha en que se completó el sub-nivel (null si no se completó aún)
   completedAt: {
     type: Date,
     default: null
@@ -42,8 +60,8 @@ const progressSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índice compuesto único: un usuario solo tiene un registro por nivel
-progressSchema.index({ userId: 1, levelId: 1 }, { unique: true });
+// Índice compuesto único: un usuario solo tiene un registro por sub-nivel
+progressSchema.index({ userId: 1, levelId: 1, subLevelId: 1 }, { unique: true });
 
 // ─── Métodos Estáticos ────────────────────────────────────────────
 
@@ -60,40 +78,35 @@ progressSchema.statics.findByUserClerkId = async function (clerkId) {
   if (!user) return [];
 
   return this.find({ userId: user._id })
-    .select('levelId status score completedAt');
+    .select('levelId subLevelId status score accuracyPercentage highestStreak completedAt');
 };
 
 /**
- * Inserta o actualiza el progreso de un usuario en un nivel específico.
- * Si ya existe, conserva el puntaje más alto y no sobreescribe completedAt.
- * @param {string} clerkId - ID de Clerk Auth del usuario.
- * @param {string} levelId - ObjectId del nivel.
- * @param {string} status - Estado nuevo ('locked', 'in_progress', 'completed').
- * @param {number} score - Puntaje obtenido en esta sesión.
- * @returns {Promise<Object>} El progreso actualizado.
+ * Inserta o actualiza el progreso de un usuario en un sub-nivel.
+ * Si ya existe, conserva los récords históricos (highestStreak, accuracy).
  */
-progressSchema.statics.upsertProgress = async function (clerkId, levelId, status, score) {
+progressSchema.statics.upsertProgress = async function (clerkId, levelId, subLevelId, status, score, accuracy, streak) {
   const User = mongoose.model('User');
   const user = await User.findOne({ clerkId });
   if (!user) throw new Error('Usuario no encontrado');
 
-  // Buscamos progreso existente para respetar el puntaje más alto
-  const existing = await this.findOne({ userId: user._id, levelId });
+  const existing = await this.findOne({ userId: user._id, levelId, subLevelId });
 
   const updateData = {
     status,
-    score: existing ? Math.max(existing.score, score) : score
+    score: existing ? Math.max(existing.score, score) : score,
+    accuracyPercentage: existing ? Math.max(existing.accuracyPercentage, accuracy || 0) : (accuracy || 0),
+    highestStreak: existing ? Math.max(existing.highestStreak, streak || 0) : (streak || 0)
   };
 
-  // Solo marcamos completedAt si pasa a 'completed' y no estaba completado antes
   if (status === 'completed' && (!existing || !existing.completedAt)) {
     updateData.completedAt = new Date();
   }
 
   return this.findOneAndUpdate(
-    { userId: user._id, levelId },
+    { userId: user._id, levelId, subLevelId },
     { $set: updateData },
-    { new: true, upsert: true, select: 'levelId status score completedAt' }
+    { new: true, upsert: true, select: 'levelId subLevelId status score accuracyPercentage highestStreak completedAt' }
   );
 };
 
