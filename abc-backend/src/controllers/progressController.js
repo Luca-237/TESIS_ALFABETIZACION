@@ -26,25 +26,40 @@ export const getUserProgress = async (req, res) => {
  * PUT /api/progress/:levelId
  * Actualiza o crea el progreso del usuario en un nivel específico.
  * Conserva siempre el puntaje más alto obtenido.
+ *
+ * Body: { subLevelId, nuevoSubNivel, status, score, accuracy, streak }
+ *  - subLevelId:    sub-nivel actual (antes del gate), ej: "A"
+ *  - nuevoSubNivel: sub-nivel resultante del gate, ej: "B"
+ *  - status:        'in_progress' | 'completed'
  */
 export const updateProgress = async (req, res) => {
   try {
     const clerkId = req.auth.userId;
     const { levelId } = req.params;
-    const { status, score } = req.body;
+    const { subLevelId = 'A', nuevoSubNivel, status, score, accuracy, streak } = req.body;
 
     // Validación del estado de progreso
     if (!['locked', 'in_progress', 'completed'].includes(status)) {
       return res.status(400).json({ error: 'Estado de progreso inválido' });
     }
+    if (!['A', 'B', 'C'].includes(subLevelId)) {
+      return res.status(400).json({ error: 'subLevelId debe ser A, B o C' });
+    }
 
     const updatedProgress = await Progress.upsertProgress(
-      clerkId, levelId, status, score || 0
+      clerkId,
+      levelId,
+      subLevelId,
+      nuevoSubNivel || subLevelId,   // Si no se indica nuevo, queda en el mismo
+      status,
+      score || 0,
+      accuracy || 0,
+      streak || 0,
     );
 
     res.status(200).json({
       message: 'Progreso actualizado exitosamente',
-      data: updatedProgress
+      data: updatedProgress,
     });
   } catch (error) {
     console.error('❌ Error actualizando progreso:', error);
